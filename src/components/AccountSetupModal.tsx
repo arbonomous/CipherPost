@@ -132,15 +132,19 @@ export function AccountSetupModal({
   const [smtpPort, setSmtpPort] = useState(PRESETS[2].smtpPort);
   const [smtpTls, setSmtpTls] = useState<TlsMode>(PRESETS[2].smtpTls);
 
+  const envClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string | undefined) || '';
+  const envClientSecret = (import.meta.env.VITE_GOOGLE_CLIENT_SECRET as string | undefined) || '';
+  const hasBundledOAuth = envClientId.trim().length > 0;
+
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [oauthRunning, setOauthRunning] = useState(false);
   const [showOAuthConfig, setShowOAuthConfig] = useState(false);
   const [oauthClientId, setOauthClientId] = useState(
-    () => localStorage.getItem('cp_google_client_id') || '',
+    () => envClientId || localStorage.getItem('cp_google_client_id') || '',
   );
   const [oauthClientSecret, setOauthClientSecret] = useState(
-    () => localStorage.getItem('cp_google_client_secret') || '',
+    () => envClientSecret || localStorage.getItem('cp_google_client_secret') || '',
   );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
@@ -368,15 +372,17 @@ export function AccountSetupModal({
                   )}
                   <span>{oauthRunning ? 'Waiting for Google in browser…' : 'Sign in with Google'}</span>
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setShowOAuthConfig((v) => !v)}
-                  className="text-[11px] text-[#7c8599] hover:text-[#edf0f5]"
-                >
-                  {showOAuthConfig ? 'Hide OAuth Client ID' : 'Configure Google OAuth Client ID'}
-                </button>
+                {!hasBundledOAuth && (
+                  <button
+                    type="button"
+                    onClick={() => setShowOAuthConfig((v) => !v)}
+                    className="text-[11px] text-[#7c8599] hover:text-[#edf0f5]"
+                  >
+                    {showOAuthConfig ? 'Hide OAuth Client ID' : 'Configure Google OAuth Client ID'}
+                  </button>
+                )}
               </div>
-              {showOAuthConfig && (
+              {!hasBundledOAuth && showOAuthConfig && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
                   <input
                     type="text"
