@@ -428,16 +428,16 @@ export function AccountSetupModal({
                 {testResult.steps.map((s, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between gap-2 text-[11px] font-mono py-1 border-t border-white/[0.04]"
+                    className="flex items-start justify-between gap-2 text-[11px] font-mono py-1 border-t border-white/[0.04]"
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-start gap-2 min-w-0">
                       <span
-                        className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        className={`w-1.5 h-1.5 rounded-full shrink-0 mt-1.5 ${
                           s.status === 'passed' ? 'bg-emerald-400' : 'bg-rose-400'
                         }`}
                       />
                       <span className="text-[#dce2ec] shrink-0">{s.step}</span>
-                      <span className="text-[#667085] truncate">{s.detail}</span>
+                      <span className="text-[#8d96a8] break-words min-w-0">{s.detail}</span>
                     </div>
                     <span className="text-[#596174] tabular-nums shrink-0">{s.latencyMs}ms</span>
                   </div>
