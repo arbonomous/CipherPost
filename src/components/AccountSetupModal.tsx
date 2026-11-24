@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import {
   CheckCircle2,
+  ExternalLink,
   KeyRound,
   Loader2,
   Lock,
@@ -9,7 +10,12 @@ import {
   X,
   XCircle,
 } from 'lucide-react';
-import { addAccount, testAccountConnection } from '../lib/tauri';
+import {
+  addAccount,
+  openExternalUrl,
+  startGmailOAuth,
+  testAccountConnection,
+} from '../lib/tauri';
 import type {
   Account,
   AuthType,
@@ -128,11 +134,61 @@ export function AccountSetupModal({
 
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [oauthRunning, setOauthRunning] = useState(false);
+  const [showOAuthConfig, setShowOAuthConfig] = useState(false);
+  const [oauthClientId, setOauthClientId] = useState(
+    () => localStorage.getItem('cp_google_client_id') || '',
+  );
+  const [oauthClientSecret, setOauthClientSecret] = useState(
+    () => localStorage.getItem('cp_google_client_secret') || '',
+  );
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   if (!open) return null;
+
+  const handleGoogleSignIn = async () => {
+    const cid = oauthClientId.trim();
+    if (!cid) {
+      setShowOAuthConfig(true);
+      setError('Enter your Google OAuth Desktop Client ID below, or click "Get App Password ↗" for instant setup.');
+      return;
+    }
+    localStorage.setItem('cp_google_client_id', cid);
+    if (oauthClientSecret.trim()) {
+      localStorage.setItem('cp_google_client_secret', oauthClientSecret.trim());
+    }
+    setError(null);
+    setOauthRunning(true);
+    try {
+      const res = await startGmailOAuth(cid, oauthClientSecret.trim() || undefined);
+      setEmail(res.email);
+      setDisplayName(res.displayName);
+      setSecret(res.accessToken);
+      setAuthType('oauth2');
+      const created = await addAccount({
+        email: res.email,
+        displayName: res.displayName,
+        provider: 'gmail',
+        authType: 'oauth2',
+        imapHost: 'imap.gmail.com',
+        imapPort: 993,
+        imapTls: 'implicit',
+        smtpHost: 'smtp.gmail.com',
+        smtpPort: 465,
+        smtpTls: 'implicit',
+        secret: res.accessToken,
+        accentColor: '#ef4444',
+      });
+      onAccountAdded(created);
+      onClose();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setOauthRunning(false);
+    }
+  };
 
   const applyPreset = (p: ProviderPreset) => {
     setPreset(p);
@@ -269,10 +325,77 @@ export function AccountSetupModal({
             })}
           </div>
 
-          <div className="px-3 py-2 rounded-md bg-[#0d1017] border border-white/[0.06] text-[11.5px] text-[#8d96a8] flex items-center gap-2">
-            <KeyRound className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-            <span>{preset.hint}</span>
+          <div className="px-3 py-2.5 rounded-md bg-[#0d1017] border border-white/[0.06] text-[11.5px] text-[#8d96a8] flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <KeyRound className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+              <span>{preset.hint}</span>
+            </div>
+            {preset.kind === 'gmail' && (
+              <button
+                type="button"
+                onClick={() => openExternalUrl('https://myaccount.google.com/apppasswords')}
+                className="h-7 px-2.5 rounded bg-white/[0.06] hover:bg-white/[0.11] text-[#edf0f5] text-[11px] font-medium flex items-center gap-1.5 shrink-0 transition-colors"
+              >
+                <span>Open App Passwords</span>
+                <ExternalLink className="w-3 h-3" />
+              </button>
+            )}
+            {preset.kind === 'icloud' && (
+              <button
+                type="button"
+                onClick={() => openExternalUrl('https://appleid.apple.com')}
+                className="h-7 px-2.5 rounded bg-white/[0.06] hover:bg-white/[0.11] text-[#edf0f5] text-[11px] font-medium flex items-center gap-1.5 shrink-0 transition-colors"
+              >
+                <span>Open Apple ID</span>
+                <ExternalLink className="w-3 h-3" />
+              </button>
+            )}
           </div>
+
+          {preset.kind === 'gmail' && (
+            <div className="p-3 rounded-lg bg-[#0d1017] border border-white/[0.08] space-y-2.5">
+              <div className="flex items-center justify-between gap-2 flex-wrap">
+                <button
+                  type="button"
+                  onClick={handleGoogleSignIn}
+                  disabled={oauthRunning}
+                  className="h-9 px-4 rounded-md bg-white hover:bg-[#f1f5f9] text-[#090a0d] text-[12.5px] font-semibold flex items-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  {oauthRunning ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <span className="font-bold text-[#ea4335]">G</span>
+                  )}
+                  <span>{oauthRunning ? 'Waiting for Google in browser…' : 'Sign in with Google'}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowOAuthConfig((v) => !v)}
+                  className="text-[11px] text-[#7c8599] hover:text-[#edf0f5]"
+                >
+                  {showOAuthConfig ? 'Hide OAuth Client ID' : 'Configure Google OAuth Client ID'}
+                </button>
+              </div>
+              {showOAuthConfig && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+                  <input
+                    type="text"
+                    value={oauthClientId}
+                    onChange={(e) => setOauthClientId(e.target.value)}
+                    placeholder="Google Desktop Client ID (xxxx.apps.googleusercontent.com)"
+                    className="h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[11.5px] font-mono text-[#dce2ec]"
+                  />
+                  <input
+                    type="password"
+                    value={oauthClientSecret}
+                    onChange={(e) => setOauthClientSecret(e.target.value)}
+                    placeholder="Client Secret (optional for Desktop)"
+                    className="h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[11.5px] font-mono text-[#dce2ec]"
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Identity & Secret */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">

@@ -1,6 +1,7 @@
 use std::sync::Arc;
 
 use tauri::{AppHandle, Emitter, State};
+use tauri_plugin_opener::OpenerExt;
 
 use crate::ai;
 use crate::db::Database;
@@ -11,10 +12,24 @@ use crate::models::{
     ConnectionTestResult, FolderCounts, NewAccountInput, PgpStatus, PrivacyStats, SearchResponse,
     ThreadDetail, ThreadSummary,
 };
-use crate::security::keychain;
+use crate::security::{keychain, oauth};
 
 pub struct AppState {
     pub db: Arc<Database>,
+}
+
+#[tauri::command]
+pub async fn start_gmail_oauth(
+    app: AppHandle,
+    client_id: String,
+    client_secret: Option<String>,
+) -> CipherResult<oauth::GmailOAuthResult> {
+    oauth::run_gmail_oauth_pkce(&client_id, client_secret.as_deref(), |url| {
+        app.opener()
+            .open_url(url, None::<&str>)
+            .map_err(|e| crate::error::CipherError::Network(format!("Failed opening browser: {e}")))
+    })
+    .await
 }
 
 #[tauri::command]

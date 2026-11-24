@@ -70,6 +70,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            commands::start_gmail_oauth,
             commands::list_accounts,
             commands::test_account_connection,
             commands::add_account,

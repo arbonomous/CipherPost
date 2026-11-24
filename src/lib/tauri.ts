@@ -62,6 +62,33 @@ export function getBenchmarkActive(): boolean {
 // Typed IPC Bridge
 // ---------------------------------------------------------------------------
 
+export interface GmailOAuthResult {
+  email: string;
+  displayName: string;
+  accessToken: string;
+  refreshToken: string | null;
+  expiresIn: number;
+}
+
+export async function startGmailOAuth(
+  clientId: string,
+  clientSecret?: string,
+): Promise<GmailOAuthResult> {
+  if (isTauriRuntime()) {
+    return invoke<GmailOAuthResult>('start_gmail_oauth', { clientId, clientSecret });
+  }
+  throw new Error('Google Sign-In browser flow requires the desktop app.');
+}
+
+export async function openExternalUrl(url: string): Promise<void> {
+  if (isTauriRuntime()) {
+    const { openUrl } = await import('@tauri-apps/plugin-opener');
+    await openUrl(url);
+  } else {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+}
+
 export async function listAccounts(): Promise<Account[]> {
   if (isTauriRuntime()) {
     return invoke<Account[]>('list_accounts');
