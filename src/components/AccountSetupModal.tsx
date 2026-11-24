@@ -152,7 +152,7 @@ export function AccountSetupModal({
     const cid = oauthClientId.trim();
     if (!cid) {
       setShowOAuthConfig(true);
-      setError('Enter your Google OAuth Desktop Client ID below, or click "Get App Password ↗" for instant setup.');
+      setError('Paste a Google OAuth Desktop Client ID above, or click "Open App Passwords" at the top for 20-second setup.');
       return;
     }
     localStorage.setItem('cp_google_client_id', cid);
