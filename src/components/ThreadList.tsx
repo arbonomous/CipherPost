@@ -138,22 +138,19 @@ export function ThreadList({
           </span>
         </div>
 
-        <button
-          id="btn-benchmark-50k"
-          onClick={onToggleBenchmark50k}
-          title="Mount 50,000 rows to stress-test 120fps virtualized scrolling"
-          className={`titlebar-no-drag h-6 px-2 rounded text-[10.5px] font-mono flex items-center gap-1.5 border transition-colors ${
-            benchmark50k
-              ? 'bg-emerald-500/15 border-emerald-500/30 text-emerald-300'
-              : 'bg-white/[0.03] border-white/[0.07] text-[#7c8599] hover:text-[#dce2ec] hover:bg-white/[0.06]'
-          }`}
-        >
-          <Gauge className="w-3 h-3" />
-          <span>{benchmark50k ? '50k Live' : '50k Test'}</span>
-        </button>
+        {benchmark50k && (
+          <button
+            id="btn-benchmark-50k"
+            onClick={onToggleBenchmark50k}
+            className="titlebar-no-drag h-6 px-2 rounded text-[10.5px] font-mono flex items-center gap-1.5 border bg-emerald-500/15 border-emerald-500/30 text-emerald-300"
+          >
+            <Gauge className="w-3 h-3" />
+            <span>50k Active</span>
+          </button>
+        )}
       </div>
 
-      {/* Inline Instant FTS5 Search Input */}
+      {/* Inline Instant Search Input */}
       <div className="px-3 pt-2.5 pb-2 border-b border-white/[0.055] space-y-2">
         <div className="relative flex items-center">
           <Search className="w-3.5 h-3.5 text-[#596174] absolute left-2.5 pointer-events-none" />
@@ -163,7 +160,7 @@ export function ThreadList({
             type="text"
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            placeholder="Instant FTS5 search... (press /)"
+            placeholder="Search mail..."
             className="w-full h-8 pl-8 pr-16 rounded-md bg-[#11141b] border border-white/[0.07] focus:border-white/[0.18] focus:outline-none text-[12.5px] text-[#edf0f5] placeholder-[#596174] transition-colors"
           />
           <div className="absolute right-2 flex items-center gap-1.5">

@@ -182,7 +182,7 @@ function MessageCard({
                   <>
                     <ShieldAlert className="w-3 h-3" />
                     <span>
-                      {trackerCount} {trackerCount === 1 ? 'tracker' : 'trackers'} stripped
+                      {trackerCount} {trackerCount === 1 ? 'tracker' : 'trackers'} blocked
                     </span>
                     <ChevronDown
                       className={`w-3 h-3 transition-transform ${showTrackerAudit ? 'rotate-180' : ''}`}
@@ -191,7 +191,7 @@ function MessageCard({
                 ) : (
                   <>
                     <ShieldCheck className="w-3 h-3" />
-                    <span>0 trackers · sandboxed</span>
+                    <span>Privacy protected</span>
                   </>
                 )}
               </button>
@@ -201,10 +201,6 @@ function MessageCard({
                 fingerprint={message.pgpFingerprint}
                 signer={message.pgpSigner}
               />
-
-              <span className="text-[10px] font-mono text-[#596174] hidden sm:inline">
-                sandbox=&quot;allow-same-origin&quot; · scripts=off
-              </span>
             </div>
 
             {/* One-Click Load Remote Assets Toggle */}
@@ -437,22 +433,22 @@ export function ReadingPane({
                 id="btn-ai-summarize"
                 onClick={handleSummarize}
                 disabled={aiLoading}
-                title="Generate 2-bullet TL;DR locally via Ollama/MLX (never leaves localhost)"
+                title="Generate a 2-bullet summary on your device"
                 className="h-7 px-2.5 rounded-md bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#cbd5e1] text-[11.5px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 <Cpu className="w-3.5 h-3.5 text-emerald-400" />
-                <span>{aiLoading ? 'Summarizing…' : 'Local TL;DR'}</span>
+                <span>{aiLoading ? 'Summarizing…' : 'Summarize'}</span>
               </button>
 
               <button
                 id="btn-ai-draft"
                 onClick={handleAiDraft}
                 disabled={aiDrafting}
-                title="Draft context-aware reply on-device"
+                title="Draft a reply on your device"
                 className="h-7 px-2.5 rounded-md bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#cbd5e1] text-[11.5px] font-medium flex items-center gap-1.5 transition-colors disabled:opacity-50"
               >
                 <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-                <span>{aiDrafting ? 'Drafting…' : 'AI Reply'}</span>
+                <span>{aiDrafting ? 'Drafting…' : 'Draft Reply'}</span>
               </button>
             </>
           )}
@@ -478,10 +474,10 @@ export function ReadingPane({
               {thread.subject}
             </h2>
             {thread.trackersBlocked > 0 && (
-              <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-[11px] font-mono text-amber-300">
+              <span className="shrink-0 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 text-[11px] font-medium text-amber-300">
                 <ShieldAlert className="w-3.5 h-3.5" />
                 {thread.trackersBlocked}{' '}
-                {thread.trackersBlocked === 1 ? 'tracker' : 'trackers'} neutralized
+                {thread.trackersBlocked === 1 ? 'tracker' : 'trackers'} blocked
               </span>
             )}
           </div>
@@ -491,15 +487,15 @@ export function ReadingPane({
         {summary && (
           <div className="p-3.5 rounded-lg bg-[#12161f] border border-emerald-500/25 space-y-2">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="font-mono text-emerald-300 flex items-center gap-1.5">
+              <span className="font-medium text-emerald-300 flex items-center gap-1.5">
                 <Cpu className="w-3.5 h-3.5" />
-                ON-DEVICE TL;DR · {summary.modelUsed}
+                On-Device Summary
               </span>
-              <span className="font-mono text-[#667085] tabular-nums">
-                127.0.0.1 · {summary.latencyMs}ms
+              <span className="text-[#667085] flex items-center gap-2">
+                <span>Private · {summary.modelUsed}</span>
                 {summary.actionRequired && (
-                  <span className="ml-2 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300">
-                    ACTION NEEDED
+                  <span className="px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-300 font-medium">
+                    Action Needed
                   </span>
                 )}
               </span>

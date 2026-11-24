@@ -128,6 +128,7 @@ export function AccountSetupModal({
 
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -142,6 +143,7 @@ export function AccountSetupModal({
     setSmtpHost(p.smtpHost);
     setSmtpPort(p.smtpPort);
     setSmtpTls(p.smtpTls);
+    setShowAdvanced(p.kind === 'custom');
     setTestResult(null);
     setError(null);
   };
@@ -200,9 +202,9 @@ export function AccountSetupModal({
     >
       <div
         role="dialog"
-        aria-label="Add Direct IMAP/SMTP Account"
+        aria-label="Connect Your Email"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-[680px] rounded-xl bg-[#11141c] border border-white/[0.12] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+        className="w-full max-w-[640px] rounded-xl bg-[#11141c] border border-white/[0.12] shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
       >
         {/* Modal Header */}
         <div className="px-5 py-4 border-b border-white/[0.07] flex items-center justify-between">
@@ -212,10 +214,10 @@ export function AccountSetupModal({
             </div>
             <div>
               <h2 className="text-[14.5px] font-semibold text-[#f1f5f9]">
-                Connect Direct IMAP / SMTP Account
+                Connect Your Email
               </h2>
               <p className="text-[11.5px] text-[#7c8599]">
-                Zero-trust direct connection · Credentials sealed strictly in macOS Keychain
+                Direct connection from your Mac · Saved securely in macOS Keychain
               </p>
             </div>
           </div>
@@ -313,65 +315,78 @@ export function AccountSetupModal({
             </label>
           </div>
 
-          {/* IMAP & SMTP Host / Port / TLS Controls */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-            <div className="p-3 rounded-lg bg-[#0d1017] border border-white/[0.06] space-y-2">
-              <div className="text-[10.5px] font-mono uppercase text-[#7c8599] flex items-center gap-1.5">
-                <Lock className="w-3 h-3 text-emerald-400" />
-                Incoming IMAP (IDLE Push)
-              </div>
-              <input
-                type="text"
-                value={imapHost}
-                onChange={(e) => setImapHost(e.target.value)}
-                className="w-full h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
-              />
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={imapPort}
-                  onChange={(e) => setImapPort(Number(e.target.value))}
-                  className="w-24 h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
-                />
-                <select
-                  value={imapTls}
-                  onChange={(e) => setImapTls(e.target.value as TlsMode)}
-                  className="flex-1 h-8 px-2 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
-                >
-                  <option value="implicit">Implicit TLS (993)</option>
-                  <option value="starttls">STARTTLS (143 / 1143)</option>
-                </select>
-              </div>
-            </div>
+          {/* Collapsible Advanced IMAP & SMTP Host / Port / TLS Controls */}
+          <div className="pt-1">
+            <button
+              type="button"
+              onClick={() => setShowAdvanced((v) => !v)}
+              className="text-[11.5px] text-[#7c8599] hover:text-[#edf0f5] flex items-center gap-1.5 transition-colors"
+            >
+              <span>{showAdvanced ? '▾' : '▸'}</span>
+              <span>Advanced server settings ({imapHost}:{imapPort})</span>
+            </button>
 
-            <div className="p-3 rounded-lg bg-[#0d1017] border border-white/[0.06] space-y-2">
-              <div className="text-[10.5px] font-mono uppercase text-[#7c8599] flex items-center gap-1.5">
-                <Lock className="w-3 h-3 text-emerald-400" />
-                Outgoing SMTP (Direct)
+            {showAdvanced && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2.5">
+                <div className="p-3 rounded-lg bg-[#0d1017] border border-white/[0.06] space-y-2">
+                  <div className="text-[10.5px] font-medium uppercase text-[#7c8599] flex items-center gap-1.5">
+                    <Lock className="w-3 h-3 text-emerald-400" />
+                    Incoming Mail (IMAP)
+                  </div>
+                  <input
+                    type="text"
+                    value={imapHost}
+                    onChange={(e) => setImapHost(e.target.value)}
+                    className="w-full h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={imapPort}
+                      onChange={(e) => setImapPort(Number(e.target.value))}
+                      className="w-24 h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
+                    />
+                    <select
+                      value={imapTls}
+                      onChange={(e) => setImapTls(e.target.value as TlsMode)}
+                      className="flex-1 h-8 px-2 rounded bg-[#090b10] border border-white/[0.08] text-[12px] text-[#dce2ec]"
+                    >
+                      <option value="implicit">Implicit TLS (993)</option>
+                      <option value="starttls">STARTTLS (143 / 1143)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-lg bg-[#0d1017] border border-white/[0.06] space-y-2">
+                  <div className="text-[10.5px] font-medium uppercase text-[#7c8599] flex items-center gap-1.5">
+                    <Lock className="w-3 h-3 text-emerald-400" />
+                    Outgoing Mail (SMTP)
+                  </div>
+                  <input
+                    type="text"
+                    value={smtpHost}
+                    onChange={(e) => setSmtpHost(e.target.value)}
+                    className="w-full h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
+                  />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      value={smtpPort}
+                      onChange={(e) => setSmtpPort(Number(e.target.value))}
+                      className="w-24 h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
+                    />
+                    <select
+                      value={smtpTls}
+                      onChange={(e) => setSmtpTls(e.target.value as TlsMode)}
+                      className="flex-1 h-8 px-2 rounded bg-[#090b10] border border-white/[0.08] text-[12px] text-[#dce2ec]"
+                    >
+                      <option value="implicit">Implicit TLS (465)</option>
+                      <option value="starttls">STARTTLS (587 / 1025)</option>
+                    </select>
+                  </div>
+                </div>
               </div>
-              <input
-                type="text"
-                value={smtpHost}
-                onChange={(e) => setSmtpHost(e.target.value)}
-                className="w-full h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
-              />
-              <div className="flex items-center gap-2">
-                <input
-                  type="number"
-                  value={smtpPort}
-                  onChange={(e) => setSmtpPort(Number(e.target.value))}
-                  className="w-24 h-8 px-2.5 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
-                />
-                <select
-                  value={smtpTls}
-                  onChange={(e) => setSmtpTls(e.target.value as TlsMode)}
-                  className="flex-1 h-8 px-2 rounded bg-[#090b10] border border-white/[0.08] text-[12px] font-mono text-[#dce2ec]"
-                >
-                  <option value="implicit">Implicit TLS (465)</option>
-                  <option value="starttls">STARTTLS (587 / 1025)</option>
-                </select>
-              </div>
-            </div>
+            )}
           </div>
 
           {/* Live TLS Handshake & Capability Diagnostic Output */}
