@@ -1,0 +1,75 @@
+[package]
+name = "cipherpost"
+version = "0.1.0"
+description = "CipherPost — Zero-Trust, Local-First, Privacy-Hardened Desktop Email Client for macOS"
+authors = ["CipherPost Contributors"]
+license = "MIT"
+edition = "2021"
+rust-version = "1.80"
+
+[lib]
+name = "cipherpost_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# Tauri v2 Core
+tauri = { version = "2", features = ["macos-private-api"] }
+tauri-plugin-opener = "2"
+
+# Async Runtime & Networking
+tokio = { version = "1", features = ["full"] }
+futures = "0.3"
+tokio-rustls = "0.26"
+rustls = { version = "0.23", default-features = false, features = ["ring", "std", "tls12"] }
+webpki-roots = "0.26"
+
+# Mail Protocols (IMAP IDLE + MIME + SMTP)
+async-imap = { version = "0.10", default-features = false, features = ["runtime-tokio"] }
+mail-parser = "0.9"
+lettre = { version = "0.11", default-features = false, features = ["tokio1", "tokio1-rustls-tls", "smtp-transport", "builder", "hostname"] }
+
+# Encrypted Local Storage (SQLCipher + FTS5)
+rusqlite = { version = "0.32", features = ["bundled-sqlcipher", "chrono", "serde_json"] }
+
+# Active Privacy HTML Sanitizer & Tracker Shield
+lol_html = "2"
+url = "2"
+regex = "1"
+
+# PGP / Cryptography (Sequoia OpenPGP with constant-time OpenSSL backend)
+sequoia-openpgp = { version = "1.21", default-features = false, features = ["crypto-openssl", "compression"] }
+sha2 = "0.10"
+hex = "0.4"
+rand = "0.8"
+zeroize = { version = "1.8", features = ["derive"] }
+base64 = "0.22"
+
+# OS Keychain Credential Security (macOS Keychain via apple-native)
+keyring = { version = "3", features = ["apple-native", "linux-native"] }
+
+# Local AI Triage Client (Ollama / MLX localhost-only)
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+
+# Serialization, Errors, Logging, Time
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4", "serde"] }
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+# Self-contained vendored OpenSSL for SQLCipher + Sequoia OpenPGP on Apple Silicon macOS builds
+[target.'cfg(target_os = "macos")'.dependencies]
+rusqlite = { version = "0.32", features = ["bundled-sqlcipher-vendored-openssl", "chrono", "serde_json"] }
+openssl = { version = "0.10", features = ["vendored"] }
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = 3
+strip = true

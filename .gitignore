@@ -1,0 +1,16 @@
+# Dependencies & Build Artifacts
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+
+# macOS & OS files
+.DS_Store
+*.swp
+
+# Local encrypted vaults (never commit user databases or secrets)
+*.db
+*.db-wal
+*.db-shm
+.env
+.env.*

@@ -1,0 +1,104 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", sans-serif;
+  --font-mono: "JetBrains Mono", "SF Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-obsidian-950: #090a0d;
+  --color-obsidian-900: #0d0f14;
+  --color-obsidian-850: #11141b;
+  --color-obsidian-800: #161a23;
+  --color-obsidian-700: #222836;
+  --color-hairline: rgba(255, 255, 255, 0.068);
+  --color-hairline-strong: rgba(255, 255, 255, 0.13);
+}
+
+:root {
+  color-scheme: dark;
+  font-family: var(--font-sans);
+  background-color: #090a0d;
+  color: #edf0f5;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  border-color: var(--color-hairline);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  user-select: none;
+}
+
+.selectable {
+  user-select: text;
+}
+
+/* Custom razor-thin scrollbars for 120fps virtualized panes */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.09);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* Zero layout shift virtual row containment */
+.virtual-thread-row {
+  contain: strict;
+  will-change: transform;
+}
+
+/* Crisp FTS5 search mark highlight */
+mark {
+  background: rgba(16, 185, 129, 0.22);
+  color: #a7f3d0;
+  padding: 0 2px;
+  border-radius: 3px;
+}
+
+/* Subtle keyboard keycap styling */
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.32rem;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  line-height: 1;
+  font-weight: 500;
+  color: #9ba3b5;
+  background: rgba(255, 255, 255, 0.045);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+}
+
+/* macOS Overlay Titlebar drag region */
+.titlebar-drag {
+  -webkit-app-region: drag;
+}
+
+.titlebar-no-drag {
+  -webkit-app-region: no-drag;
+}
