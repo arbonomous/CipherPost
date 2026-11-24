@@ -119,12 +119,21 @@ export function ThreadList({
       className="w-[376px] xl:w-[404px] h-full flex flex-col bg-[#0b0c10] border-r border-white/[0.068] shrink-0"
     >
       {/* Top Folder Header + 50k Virtualizer Benchmark Switch */}
-      <div className="titlebar-drag h-12 px-3.5 flex items-center justify-between border-b border-white/[0.055]">
-        <div className="flex items-center gap-2">
-          <h1 className="text-[13.5px] font-semibold tracking-[-0.015em] text-[#f1f5f9]">
+      <div
+        data-tauri-drag-region
+        className="titlebar-drag h-12 px-3.5 flex items-center justify-between border-b border-white/[0.055]"
+      >
+        <div data-tauri-drag-region className="flex items-center gap-2">
+          <h1
+            data-tauri-drag-region
+            className="text-[13.5px] font-semibold tracking-[-0.015em] text-[#f1f5f9]"
+          >
             {FOLDER_TITLES[activeFolder]}
           </h1>
-          <span className="text-[11px] font-mono tabular-nums text-[#667085]">
+          <span
+            data-tauri-drag-region
+            className="text-[11px] font-mono tabular-nums text-[#667085]"
+          >
             {filteredThreads.length.toLocaleString()}
           </span>
         </div>

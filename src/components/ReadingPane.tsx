@@ -362,7 +362,10 @@ export function ReadingPane({
   return (
     <main className="flex-1 h-full bg-[#0e1015] flex flex-col min-w-0">
       {/* Top Action Toolbar */}
-      <header className="titlebar-drag h-12 px-5 border-b border-white/[0.055] flex items-center justify-between gap-3 shrink-0">
+      <header
+        data-tauri-drag-region
+        className="titlebar-drag h-12 px-5 border-b border-white/[0.055] flex items-center justify-between gap-3 shrink-0"
+      >
         <div className="titlebar-no-drag flex items-center gap-1">
           {thread.folderRole !== 'archive' ? (
             <button

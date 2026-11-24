@@ -91,39 +91,52 @@ export function Sidebar({
       }`}
     >
       {/* Top macOS Overlay Titlebar & Brand Header */}
-      <div className="titlebar-drag h-12 px-3 flex items-center justify-between border-b border-white/[0.055]">
+      <div
+        data-tauri-drag-region
+        className={`titlebar-drag h-12 flex items-center border-b border-white/[0.055] ${
+          collapsed ? 'px-2 justify-center' : 'pl-[78px] pr-2.5 justify-between'
+        }`}
+      >
         {!collapsed && (
-          <div className="flex items-center gap-2 pl-1">
-            <div className="w-6 h-6 rounded-md bg-gradient-to-b from-[#1e2430] to-[#12151c] border border-white/[0.12] flex items-center justify-center shadow-inner">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" strokeWidth={2.2} />
+          <div data-tauri-drag-region className="flex items-center gap-2 min-w-0">
+            <div
+              data-tauri-drag-region
+              className="w-5 h-5 rounded bg-gradient-to-b from-[#1e2430] to-[#12151c] border border-white/[0.12] flex items-center justify-center shrink-0"
+            >
+              <ShieldCheck className="w-3 h-3 text-emerald-400 pointer-events-none" strokeWidth={2.2} />
             </div>
-            <div className="flex flex-col leading-none">
-              <span className="text-[13px] font-semibold tracking-[-0.02em] text-[#f1f5f9]">
-                CipherPost
-              </span>
-              <span className="text-[9.5px] font-mono text-emerald-400/80 tracking-wider uppercase mt-0.5">
-                Zero-Trust
-              </span>
-            </div>
+            <span
+              data-tauri-drag-region
+              className="text-[12.5px] font-semibold tracking-[-0.02em] text-[#f1f5f9] truncate"
+            >
+              CipherPost
+            </span>
           </div>
         )}
-        <button
-          id="btn-toggle-sidebar"
-          onClick={onToggleCollapse}
-          title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-          className="titlebar-no-drag p-1.5 rounded-md text-[#7c8599] hover:text-[#edf0f5] hover:bg-white/[0.06] transition-colors mx-auto"
-          style={collapsed ? undefined : { marginLeft: 'auto', marginRight: 0 }}
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="w-4 h-4" />
-          ) : (
+        {!collapsed && (
+          <button
+            id="btn-toggle-sidebar"
+            onClick={onToggleCollapse}
+            title="Collapse sidebar"
+            className="titlebar-no-drag p-1.5 rounded-md text-[#7c8599] hover:text-[#edf0f5] hover:bg-white/[0.06] transition-colors shrink-0"
+          >
             <PanelLeftClose className="w-4 h-4" />
-          )}
-        </button>
+          </button>
+        )}
       </div>
 
       {/* Primary Action Strip: Compose + Cmd+K Search */}
       <div className="p-2.5 flex flex-col gap-1.5">
+        {collapsed && (
+          <button
+            id="btn-toggle-sidebar"
+            onClick={onToggleCollapse}
+            title="Expand sidebar"
+            className="h-7 rounded-md text-[#7c8599] hover:text-[#edf0f5] hover:bg-white/[0.06] flex items-center justify-center transition-colors"
+          >
+            <PanelLeftOpen className="w-4 h-4" />
+          </button>
+        )}
         <button
           id="btn-compose"
           onClick={onCompose}
