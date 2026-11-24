@@ -46,18 +46,18 @@ const PRESETS: ProviderPreset[] = [
   {
     kind: 'gmail',
     label: 'Gmail',
-    tagline: 'Direct IMAP/SMTP · OAuth2 XOAUTH2',
-    authType: 'oauth2',
+    tagline: 'Google App Password or OAuth2',
+    authType: 'password',
     imapHost: 'imap.gmail.com',
     imapPort: 993,
     imapTls: 'implicit',
     smtpHost: 'smtp.gmail.com',
     smtpPort: 465,
     smtpTls: 'implicit',
-    secretLabel: 'OAuth2 Access Token (or App Password)',
-    secretPlaceholder: 'ya29.a0AfH6SM...',
+    secretLabel: 'Google App Password (16 characters)',
+    secretPlaceholder: 'xxxx xxxx xxxx xxxx',
     accentColor: '#ef4444',
-    hint: 'Connects directly from your Mac to imap.gmail.com:993 via SASL XOAUTH2. Zero proxy servers.',
+    hint: 'In Google Account → Security → 2-Step Verification → App passwords, generate a password for CipherPost. (Or switch Auth Method to OAuth2 if using an access token.)',
   },
   {
     kind: 'icloud',
@@ -148,20 +148,31 @@ export function AccountSetupModal({
     setError(null);
   };
 
-  const buildPayload = (): NewAccountInput => ({
-    email: email.trim(),
-    displayName: displayName.trim() || email.trim().split('@')[0] || 'CipherPost User',
-    provider: preset.kind,
-    authType,
-    imapHost: imapHost.trim(),
-    imapPort: Number(imapPort),
-    imapTls,
-    smtpHost: smtpHost.trim(),
-    smtpPort: Number(smtpPort),
-    smtpTls,
-    secret,
-    accentColor: preset.accentColor,
-  });
+  const buildPayload = (): NewAccountInput => {
+    const trimmedSecret = secret.trim();
+    const looksLikeOAuthToken = trimmedSecret.startsWith('ya29.');
+    const effectiveAuthType: AuthType =
+      preset.kind === 'gmail' && looksLikeOAuthToken ? 'oauth2' : authType;
+    const normalizedSecret =
+      preset.kind === 'gmail' && effectiveAuthType === 'password'
+        ? trimmedSecret.replace(/\s+/g, '')
+        : trimmedSecret;
+
+    return {
+      email: email.trim(),
+      displayName: displayName.trim() || email.trim().split('@')[0] || 'CipherPost User',
+      provider: preset.kind,
+      authType: effectiveAuthType,
+      imapHost: imapHost.trim(),
+      imapPort: Number(imapPort),
+      imapTls,
+      smtpHost: smtpHost.trim(),
+      smtpPort: Number(smtpPort),
+      smtpTls,
+      secret: normalizedSecret,
+      accentColor: preset.accentColor,
+    };
+  };
 
   const handleTestHandshake = async () => {
     setError(null);

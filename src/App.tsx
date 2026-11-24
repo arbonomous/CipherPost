@@ -136,6 +136,9 @@ export function App() {
         if (ev.syncedCount > 0) {
           showToast(ev.detail);
         }
+      } else if (ev.phase === 'error') {
+        refreshAll();
+        showToast(`Sync error: ${ev.detail}`);
       }
     }).then((fn) => {
       unlisten = fn;
@@ -285,12 +288,18 @@ export function App() {
 
   const handleSyncAll = useCallback(async () => {
     setSyncing(true);
+    let lastError: string | null = null;
     try {
       for (const acc of accounts) {
-        await syncAccountNow(acc.id).catch(() => {});
+        if (acc.id === 'acc-proton-vault' || acc.id === 'acc-work-gmail') continue;
+        try {
+          await syncAccountNow(acc.id);
+        } catch (err) {
+          lastError = err instanceof Error ? err.message : String(err);
+        }
       }
       await refreshAll();
-      showToast('IMAP IDLE sync completed across all accounts');
+      showToast(lastError ? `Sync failed: ${lastError}` : 'Mail sync completed');
     } finally {
       setSyncing(false);
     }
