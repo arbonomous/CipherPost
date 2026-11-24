@@ -593,7 +593,7 @@ where
     F: Fn(SyncEventPayload) + Send + Sync + 'static,
 {
     let on_event = Arc::new(on_event);
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         let mut backoff_secs = 5u64;
         loop {
             let secret_ref = keychain::account_secret_ref(&account.id);

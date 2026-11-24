@@ -28,7 +28,7 @@ pub async fn test_account_connection(input: NewAccountInput) -> ConnectionTestRe
 }
 
 #[tauri::command]
-pub fn add_account(
+pub async fn add_account(
     app: AppHandle,
     state: State<'_, AppState>,
     input: NewAccountInput,
