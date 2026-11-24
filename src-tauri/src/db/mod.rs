@@ -1148,4 +1148,137 @@ mod tests {
             res.query_time_ms
         );
     }
+
+    #[test]
+    fn e2e_full_backend_lifecycle() {
+        let key = Zeroizing::new(
+            "abcdef0123456789abcdef0123456789abcdef0123456789abcdef0123456789".to_string(),
+        );
+        let db = Database::open_in_memory(&key).expect("open sqlcipher db");
+
+        // 1. Create account
+        let acc = db
+            .create_account(
+                "e2e-acc-1",
+                &NewAccountInput {
+                    email: "tester@gmail.com".to_string(),
+                    display_name: "Tester".to_string(),
+                    provider: ProviderKind::Gmail,
+                    auth_type: AuthType::Password,
+                    imap_host: "imap.gmail.com".to_string(),
+                    imap_port: 993,
+                    imap_tls: TlsMode::Implicit,
+                    smtp_host: "smtp.gmail.com".to_string(),
+                    smtp_port: 465,
+                    smtp_tls: TlsMode::Implicit,
+                    secret: "app-pass-1234".to_string(),
+                    accent_color: None,
+                },
+                "account_secret:e2e-acc-1",
+            )
+            .expect("create account");
+        assert_eq!(acc.email, "tester@gmail.com");
+
+        // 2. Phase 1: Envelope header ingestion
+        let needs_body = db
+            .upsert_envelope_header(
+                &acc.id,
+                "inbox",
+                101,
+                Some("<e2e-101@example.org>"),
+                None,
+                "Security Update & Invoice",
+                "Alice",
+                "alice@example.org",
+                false,
+                false,
+                4096,
+                1732470000,
+            )
+            .expect("upsert envelope");
+        assert!(needs_body);
+
+        // 3. Phase 2: MIME parse + Rust HTML sanitizer + FTS5 update trigger
+        let raw_mime = concat!(
+            "From: Alice <alice@example.org>\r\n",
+            "To: Tester <tester@gmail.com>\r\n",
+            "Subject: Security Update & Invoice\r\n",
+            "Message-ID: <e2e-101@example.org>\r\n",
+            "Content-Type: text/html; charset=utf-8\r\n",
+            "\r\n",
+            "<html><body onload='x()'><p>Quarterly invoice attached.</p>",
+            "<script>stealCookies()</script>",
+            "<img src='https://t.sidekickopen80.com/px.gif' width='1' height='1'/>",
+            "<img src='https://cdn.example.org/banner.png' alt='Banner' width='600' height='200'/>",
+            "</body></html>"
+        );
+        let parsed = crate::mail::mime::parse_and_sanitize_raw_message(raw_mime.as_bytes())
+            .expect("parse & sanitize MIME");
+        db.hydrate_sanitized_message_body(&acc.id, 101, &parsed)
+            .expect("hydrate sanitized body");
+
+        // 4. Verify thread list & sanitized detail
+        let inbox = db
+            .list_threads(Some(&acc.id), "inbox", 50, 0)
+            .expect("list inbox");
+        assert_eq!(inbox.len(), 1);
+        let tid = inbox[0].id.clone();
+
+        let detail = db.get_thread_detail(&tid).expect("get thread detail");
+        let msg = &detail.messages[0];
+        assert!(!msg.body_html_sanitized.contains("<script>"));
+        assert!(!msg.body_html_sanitized.contains("sidekickopen80"));
+        assert_eq!(msg.remote_assets_count, 1);
+        assert!(msg.trackers_blocked_count >= 3);
+
+        // 5. Verify FTS5 search hits newly hydrated message
+        let fts = db
+            .search_fts5("Quarterly", Some(&acc.id), 20)
+            .expect("fts5 search");
+        assert_eq!(fts.total_hits, 1);
+        assert_eq!(fts.results[0].thread_id, tid);
+
+        // 6. Verify folder transitions (star, read, snooze, archive, trash, inbox)
+        assert!(db.toggle_thread_star(&tid).expect("star"));
+        db.set_threads_read(&[tid.clone()], true).expect("mark read");
+        db.snooze_threads(&[tid.clone()], 1732556400).expect("snooze");
+        assert_eq!(db.list_threads(Some(&acc.id), "snoozed", 50, 0).unwrap().len(), 1);
+        db.move_threads_to_folder(&[tid.clone()], "archive").expect("archive");
+        assert_eq!(db.list_threads(Some(&acc.id), "archive", 50, 0).unwrap().len(), 1);
+        db.move_threads_to_folder(&[tid.clone()], "trash").expect("trash");
+        assert_eq!(db.list_threads(Some(&acc.id), "trash", 50, 0).unwrap().len(), 1);
+        db.move_threads_to_folder(&[tid.clone()], "inbox").expect("restore inbox");
+
+        // 7. Verify outbound message recording & counts
+        db.record_outbound_message(
+            &acc,
+            "<out-1@cipherpost.local>",
+            None,
+            &["bob@example.org".to_string()],
+            &[],
+            "Outbound Test",
+            "Direct SMTP body",
+            PgpStatus::SignedVerified,
+        )
+        .expect("record outbound");
+        let counts = db.get_folder_counts(Some(&acc.id)).expect("counts");
+        assert_eq!(counts.inbox_total, 1);
+        assert_eq!(counts.sent_total, 1);
+
+        // 8. Verify privacy stats & loopback-only AI settings enforcement
+        let stats = db.get_privacy_stats().expect("privacy stats");
+        assert!(stats.sqlcipher_active);
+        assert!(stats.fts5_ready);
+        assert!(stats.total_trackers_blocked >= 3);
+
+        let mut cfg = db.get_settings().expect("get settings");
+        cfg.ai_endpoint = "https://api.openai.com/v1".to_string();
+        assert!(db.save_settings(&cfg).is_err(), "cloud AI endpoint must be rejected");
+        cfg.ai_endpoint = "http://127.0.0.1:11434".to_string();
+        assert!(db.save_settings(&cfg).is_ok());
+
+        // 9. Delete account cascades cleanly
+        db.delete_account(&acc.id).expect("delete account");
+        assert!(db.list_accounts().unwrap().is_empty());
+    }
 }
